@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuki.mapper.ArticleMapper">
+    <select id="getArticlesOfRecommendation" resultType="article">
+        select * from
+        articles
+
+    </select>
+    <select id="getArticlesWithType" resultType="article">
+        select article_id, author_id,author_name,avatar,article_title,article_url,article_type,
+        article_cover_url,article_images,preview,publish_time
+        from articles
+        where article_type = #{type}
+    </select>
+</mapper>

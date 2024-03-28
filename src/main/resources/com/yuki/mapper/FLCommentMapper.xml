@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuki.mapper.FLCommentMapper">
+    <select id="selectOne" resultType="FLComment">
+<!--        select * from users where user_id = #{id}-->
+    </select>
+    
+    <insert id="addComment" parameterType="FLComment">
+<!--        插入数据的时候字段数量随意，mybatis会根据匹配到的字段进行插入，没匹配到的不处理-->
+        insert into first_level_comments
+        (fl_comment_id,user_id,user_name,avatar,article_id,comment,num_of_likes,num_of_dislikes,comment_time,modify_time)
+        values ( #{flCommentId},#{userId},#{userName},#{avatar},#{articleId},#{comment},#{numOfLikes},
+        #{numOfDislikes},now(),now() )
+    </insert>
+
+<!--    <select id="getAllComment" parameterType="Comment">-->
+<!--        select fl_comment_id as comment_id,user_id,user_name,comment,num_of_likes,num_of_dislikes,reported,comment_time-->
+<!--    </select>-->
+</mapper>

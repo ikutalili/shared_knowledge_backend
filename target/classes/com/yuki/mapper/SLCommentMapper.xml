@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuki.mapper.SLCommentMapper">
+    <select id="selectOne" resultType="SLComment">
+<!--        select * from users where user_id = #{id}-->
+    </select>
+    
+    <insert id="addComment" parameterType="SLComment">
+        insert into second_level_comments
+        (  sl_comment_id, fl_comment_id, reply_user_id, replied_user_id , reply_user_name , replied_user_name ,
+        reply_avatar , article_id , comment, num_of_likes, num_of_dislikes, comment_time,modify_time   )
+
+        values ( #{slCommentId}, #{flCommentId}, #{replyUserId}, #{repliedUserId}, #{replyUserName}, #{repliedUserName}, #{replyAvatar}, #{articleId}, #{comment}, #{numOfLikes},
+        #{numOfDislikes},now(),now() )
+    </insert>
+
+<!--    <select id="getAllComment" resultType="sLComment">-->
+<!--        select sl_comment_id as comment_id,reply_user_id as user_id,reply_user_name as user_name,comment,num_of_likes,-->
+<!--        num_of_dislikes,reported,comment_time-->
+<!--    </select>-->
+</mapper>

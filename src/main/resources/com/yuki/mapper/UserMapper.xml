@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuki.mapper.UserMapper">
+    <select id="selectOne" resultType="User">
+        select * from users where user_id = #{id}
+    </select>
+
+<!--    <update id="updateUserName">-->
+
+<!--    </update>-->
+<!--    下面是测试多表连接的方法-->
+    <resultMap id="multiJoin" type="User">
+
+    </resultMap>
+    <select id="testMultiJoin" resultMap="multiJoin">
+        select user_id,author_id,user_name,email,article_title,article_type
+        from users inner join articles
+        on user_id = author_id
+    </select>
+
+    <select id="testMultiJoin1" resultType="User">
+        select user_id,author_id,user_name,email,article_title,article_type
+        from users inner join articles
+        on user_id = author_id
+    </select>
+
+</mapper>

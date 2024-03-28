@@ -1,0 +1,54 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/communication_sys
+    username: root
+    password: Lin1208520+
+  devtools:
+    remote:
+      restart:
+        enabled: true
+  data:
+    redis:
+#      host: 192.168.163.129
+      port: 6379
+      host: 127.0.0.1
+  mail:
+    host: smtp.163.com
+    port: 465
+    username: m13005392970@163.com
+    password: "KDDWFJXHWPEHSACB"
+    properties:
+      mail:
+        smtp:
+#          proxy:
+#            host: 127.0.0.1
+#            port: 10808
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            enable: true
+    protocol: smtp
+    default-encoding: UTF-8
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+  #    lazy-loading-enabled: true
+  type-aliases-package: com.yuki.entity
+#  告诉 MyBatis 在启动时自动加载这些 Mapper XML 文件，并将其中定义的 SQL 映射到对应的 Mapper 接口中，从而实现 SQL 语句与 Java 方法的映射关系。
+#  mapper-locations: classpath:com/yuki/mapper/*.xml
+
+logging:
+  level:
+    root: debug
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  tomcat:
+    uri-encoding: UTF-8
