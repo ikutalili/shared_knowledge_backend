@@ -7,8 +7,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Component
 public class RedisUtils {
@@ -71,6 +74,19 @@ public class RedisUtils {
 //    哈希数据自增
     public void increment(String key,Object hashKey,Long delta) {
         ops.increment(key,hashKey,delta);
+    }
+    public Double getAverageValueOfHash(String hashKey) {
+        // 获取哈希中所有的值
+        List<Object> values = ops.values(hashKey);
+        // 将Object类型的列表转换为Integer类型的列表
+        List<Integer> integerValues = values.stream()
+                .filter(Objects::nonNull)
+                .map(o -> (Integer) o).toList();
+        // 计算平均值
+        return integerValues.stream()
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(Double.NaN); // 如果没有值，则返回NaN
     }
 
     public Long getHashSize(String key) {

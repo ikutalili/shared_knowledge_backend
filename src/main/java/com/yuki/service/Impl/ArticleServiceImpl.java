@@ -1,5 +1,6 @@
 package com.yuki.service.Impl;
 
+import com.yuki.Utils.MatrixOperationsUtils;
 import com.yuki.Utils.RedisUtils;
 import com.yuki.entity.Article;
 import com.yuki.entity.FLComment;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 
 @Service
@@ -137,11 +139,47 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public List<Article> recommendArticlesForUser(Integer userId) {
+    public List<Article> recommendArticlesForUser(Integer targetUserId) {
+//        现在要获取评分矩阵，基于用户协同过滤算法步骤是
+//        1.构建评分矩阵  2.通过评分矩阵，计算两两用户的相似度，构建用户相似度矩阵   3.选出top-N物品
         Integer[] allUserId = userMapper.getAllUserId();
-        for (Integer integer : allUserId) {
-            Map<Object, Object> ratings = redisUtils.getAllHashData(RATING_PREFIX + userId);
+        String[] allArticleId = articleMapper.getAllArticleId();
+        int index ;
+//        初始化相似度矩阵
+        Double[][] similarityMatrix = new Double[allUserId.length][allUserId.length];
+//        初始化评分矩阵
+        Double[][] ratingMatrix = new Double[allUserId.length][allArticleId.length];
+//        构建评分矩阵
+        for (int i = 0; i < allUserId.length; i++) {
+            if (Objects.equals(allUserId[i], targetUserId)) {
+                index = i;
+            }
+            for (int j = 0; j < allArticleId.length; j++) {
+                Double rating = (Double) redisUtils.getHashData(RATING_PREFIX + allUserId[i], allArticleId[j]);
+                Double average = redisUtils.getAverageValueOfHash(RATING_PREFIX + allUserId[i]);
+                if (rating == null) {
+//                    如果用户没有对文章进行评分，则填充初始值，即该用户的评分平均值，因为一开始就让用户
+                    ratingMatrix[i][j] = average != null ? average : 0;
+                }
+                else {
+                    ratingMatrix[i][j] = rating;
+                }
+            }
         }
+
+//        根据评分矩阵构建用户相似度矩阵
+        for (int i = 0; i < allUserId.length; i++) {
+            for (int j = 0; j < allUserId.length; j++) {
+                Double similarity = MatrixOperationsUtils.cosineSimilarity(ratingMatrix[i], ratingMatrix[j]);
+//                如果i == j，说明是用户对应该用户自己
+                similarityMatrix[i][j] = i == j ? 1 : similarity;
+            }
+        }
+
+//        相似度矩阵 X 评分矩阵 = 推荐列表 ??
+
+
+
         return null;
     }
 }

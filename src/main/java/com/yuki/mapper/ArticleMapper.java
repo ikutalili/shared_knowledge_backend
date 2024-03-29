@@ -61,6 +61,8 @@ public interface ArticleMapper {
     @Delete("delete from articles where article_id = #{id}")
     void deleteArticle(Integer id);
 
+//    获取所有文章id,以构建评分矩阵,前面已经定义过
+
 //    获取排行榜数据
 //    @Select("select * from articles where ")
 //    List<Article> getArticlesOfMostLiked()
