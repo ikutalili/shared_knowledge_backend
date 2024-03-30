@@ -107,9 +107,12 @@ public class ArticleController {
         User user = (User) request.getAttribute("user");
         if (isLogin(request)) {
             articleService.ratingArticle(articleId, String.valueOf(user.getUserId()));
+            System.out.println("点击文章评分操作");
+            System.out.println("success-------");
         }
         else {
             System.out.println("点击文章评分操作失败");
+            System.out.println("failed--------");
         }
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
 
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -72,8 +73,11 @@ public class RedisUtils {
         ops.delete(key,field);
     }
 //    哈希数据自增
-    public void increment(String key,Object hashKey,Long delta) {
+    public void increment(String key,Object hashKey,Integer delta) {
         ops.increment(key,hashKey,delta);
+    }
+    public Object getAllValuesOfHash(String hashKey) {
+        return ops.values(hashKey);
     }
     public Double getAverageValueOfHash(String hashKey) {
         // 获取哈希中所有的值
