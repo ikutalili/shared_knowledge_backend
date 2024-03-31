@@ -12,6 +12,7 @@ public interface CommentService {
 
     List<CommentGroup> getAllCommentsOfArticle(Integer articleId,String userId);
 
+    List<CommentGroup> getAllCommentsOfArticleWithoutLogin(Integer articleId);
     void addFLComment(FLComment flComment);
 
     void addSLComment(SLComment slComment);

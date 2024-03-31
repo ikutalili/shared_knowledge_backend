@@ -69,6 +69,31 @@ public class CommentServiceImpl implements CommentService {
         System.out.println(commentGroups);
         return commentGroups;
     }
+
+    @Override
+    public List<CommentGroup> getAllCommentsOfArticleWithoutLogin(Integer articleId) {
+        //        此处代码将得到一层一层的评论组，每一层都表示第一级评论对象以及其评论下面所有子评论的对象（集合），子评论对象集合
+        List<FLComment> flComments = flCommentMapper.getAllComments(articleId);
+        List<CommentGroup> commentGroups = new ArrayList<>();
+        for (FLComment flComment : flComments) {
+            CommentGroup commentGroup = new CommentGroup(); // 评论组,且每次都要重新创建
+//            设置每条评论的点赞数量以及状态
+            flComment.setNumOfLikes(redisUtils.getLikeNumOfComment(LIKECOMMENT + articleId,"flComment:"+flComment.getFlCommentId()));
+            flComment.setNumOfDislikes(redisUtils.getDisLikeNumOfComment(DISLIKECOMMENT + articleId,"flComment:"+flComment.getFlCommentId()));
+            Integer flCommentId = flComment.getFlCommentId();
+            List<SLComment> slComments = slCommentMapper.getAllComments(articleId, flCommentId);
+            for (SLComment slComment : slComments) {
+                slComment.setNumOfLikes(redisUtils.getLikeNumOfComment(LIKECOMMENT + articleId,"slComment:"+slComment.getSlCommentId()));
+                slComment.setNumOfDislikes(redisUtils.getDisLikeNumOfComment(DISLIKECOMMENT + articleId,"slComment:"+slComment.getSlCommentId()));
+            }
+            commentGroup.setFlComment(flComment);
+            commentGroup.setSlComments(slComments);
+            commentGroups.add(commentGroup);
+        }
+//        System.out.println(commentGroups);
+        return commentGroups;
+    }
+
     @Override
     public void addFLComment(FLComment flComment) {
         flCommentMapper.addComment(flComment);

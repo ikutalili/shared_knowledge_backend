@@ -227,7 +227,7 @@ public ResponseEntity<ByteArrayResource> downloadFile(@PathVariable String title
 //    图片的src地址获取接口,这个不属于axios请求，不会加上token
     @GetMapping("/avatar-image/{id}/{imageName}")
     public ResponseEntity<Resource> avatarImageUrl(@PathVariable Integer id, @PathVariable String imageName, HttpServletRequest request) {
-
+//        这里的名字包含后缀名
             String imgPathInDB = avatarPath + imageName;
 //        这里的id，以后凡是头像的src请求接口，都加上 1 ，文章封面的src 请求接口，则加上 2
             if (id == 2) {

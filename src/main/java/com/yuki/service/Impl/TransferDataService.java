@@ -15,13 +15,14 @@ public class TransferDataService {
     @Autowired
     private ArticleMapper articleMapper;
 
-//    @Scheduled(fixedRate = 5000)
-//    @Transactional
+    @Scheduled(fixedRate = 5000)
+    @Transactional
     public void transferData() {
         String[] allArticleId = articleMapper.getAllArticleId();
         for (String articleId : allArticleId) {
 //            分别向mysql数据库同步更新点赞，收藏等的数量，只要redis数据库中有的，都同步到mysql中去，没有的默认0，同步到mysql中去
 //            此处点赞状态等不需要进行同步，因为mysql数据库中并没有相应字段
+//            更新点赞，点踩，收藏，评论数量
             articleMapper.updateLikesById(Integer.parseInt(articleId),redisUtils.getNumOfLikes(articleId));
             articleMapper.updateDislikesById(Integer.parseInt(articleId),redisUtils.getNumOfDisikes(articleId));
             articleMapper.updateSavesById(Integer.parseInt(articleId),redisUtils.getNumOfSaves(articleId));

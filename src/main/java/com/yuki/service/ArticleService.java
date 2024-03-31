@@ -8,12 +8,13 @@ public interface ArticleService {
     List<Article> getArticlesInfoWithType(String type,String userId);
     List<Article> getAllArticles();
 
+    List<Article> getArticlesInfoByTypeWithoutLogin(String type);
 //    添加文章封面
     void addArticleCover(String fileName);
 
     void saveArticle(Integer id,String name,String avatar,String title,String articleUrl,String type,String preview);
 
-    void operationToArticle(String userId,String articleId,String operation,Boolean bool);
+    void operationToArticle(String userId,String articleId,String operation,Boolean bool,String userName);
 
     void reportArticle(String reason,Integer articleId);
 
@@ -22,5 +23,7 @@ public interface ArticleService {
     void ratingArticle(String articleId,String userId);
 
     List<Article> recommendArticlesForUser(Integer userId);
+
+
 }
 

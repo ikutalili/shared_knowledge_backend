@@ -18,6 +18,7 @@ public class ArticleController {
     private ArticleService articleService;
     @Autowired
     private CommentService commentService;
+
     private boolean isLogin(HttpServletRequest request) {
         User user = (User) request.getAttribute("user");
         return user != null;
@@ -40,7 +41,13 @@ public class ArticleController {
        }
        else {
 //           如果用户未登录，返回默认数据
-           return Result.error();
+           articles = articleService.getArticlesInfoByTypeWithoutLogin(type);
+           if (articles != null) {
+               return Result.successWithData(articles);
+           }
+           else {
+               return Result.error();
+           }
        }
 
     }
@@ -48,16 +55,18 @@ public class ArticleController {
     @PutMapping("operation-to-article/{articleId}/{operation}/{bool}")
     public Result<Void> operationToArticle(@PathVariable String articleId,@PathVariable String operation,@PathVariable Boolean bool,HttpServletRequest request) {
         User user = (User) request.getAttribute("user") ;
-        try {
-            articleService.operationToArticle(String.valueOf(user.getUserId()),articleId,operation,bool);
-            return Result.successWithoutData();
+        if (user != null) {
+            try {
+                articleService.operationToArticle(String.valueOf(user.getUserId()),articleId,operation,bool,user.getUserName());
+                return Result.successWithoutData();
+            }
+            catch (Exception e) {
+                return Result.error();
+            }
+        }else {
+            return new Result<>(1,"noLogin",null);
         }
-        catch (Exception e) {
-            return Result.error();
-        }
-
     }
-
     @GetMapping("display-all-articles")
     public Result<List<Article>> displayAllArticles(HttpServletRequest request) {
         User user = (User) request.getAttribute("user");
@@ -83,7 +92,7 @@ public class ArticleController {
             }
         }
         else {
-            return Result.error();
+            return new Result<>(1,"noLogin",null);
         }
     }
 

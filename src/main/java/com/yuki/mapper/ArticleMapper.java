@@ -10,6 +10,8 @@ import java.util.List;
 public interface ArticleMapper {
     List<Article> getArticlesOfRecommendation();
 
+    @Select("select article_title from articles")
+    String getTitleById(Integer articleId);
     @Select("select * from articles")
     List<Article> getAllArticles();
 //    根据传入的类型确定要得到哪个分类下的文章信息

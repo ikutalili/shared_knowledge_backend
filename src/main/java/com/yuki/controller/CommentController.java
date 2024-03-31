@@ -21,78 +21,137 @@ public class CommentController {
         this.redisUtils = redisUtils;
     }
     @PostMapping("/flComment/{articleId}")
-    Result<Void> addFLComment(@RequestBody FLComment flComment,@PathVariable String articleId){
-        try {
-            commentService.addFLComment(flComment);
-            commentService.addCommentCounts(articleId);
-        }catch (Exception e) {
-            e.printStackTrace();
-            return Result.error();
+    Result<Void> addFLComment(@RequestBody FLComment flComment,@PathVariable String articleId,HttpServletRequest request){
+        User user = (User) request.getAttribute("user");
+        if (isLogin(request)) {
+            if (flComment.getComment() != null) {
+                try {
+                    flComment.setUserId(user.getUserId());
+                    flComment.setUserName(user.getUserName());
+                    flComment.setAvatar(user.getAvatarUrl());
+                    commentService.addFLComment(flComment);
+                    commentService.addCommentCounts(articleId);
+                    return Result.successWithoutData();
+                }catch (Exception e) {
+                    e.printStackTrace();
+                    return Result.error();
+                }
+            }else {
+                return new Result<>(1,"comment cannot be null",null);
+            }
         }
-        return Result.successWithoutData();
+        else {
+            return new Result<>(1,"noLogin",null);
+        }
     }
 
     @PostMapping("/slComment/{articleId}")
-    Result<Void> addSLComment(@RequestBody SLComment slComment,@PathVariable String articleId){
-        try {
-            commentService.addSLComment(slComment);
-            commentService.addCommentCounts(articleId);
-        }catch (Exception e) {
-            e.printStackTrace();
-            return Result.error();
+    Result<Void> addSLComment(@RequestBody SLComment slComment,@PathVariable String articleId,HttpServletRequest request){
+        User user = (User) request.getAttribute("user");
+        if (isLogin(request)) {
+            if (slComment.getComment() != null) {
+                try {
+                    slComment.setReplyUserId(user.getUserId());
+                    slComment.setReplyUserName(user.getUserName());
+                    slComment.setReplyAvatar(user.getAvatarUrl());
+                    commentService.addSLComment(slComment);
+                    commentService.addCommentCounts(articleId);
+                    return Result.successWithoutData();
+                }catch (Exception e) {
+                    e.printStackTrace();
+                    return Result.error();
+                }
+            }else {
+                return new Result<>(1,"comment cannot be null",null);
+            }
         }
-        return Result.successWithoutData();
+        else {
+            return new Result<>(1,"noLogin",null);
+        }
     }
     //    对评论进行操作的接口    String articleId,String commentId,String bool
-    @PutMapping("likeComment/{articleId}/{userId}/{which}/{commentId}/{bool}")
-    public Result<Void> likeComment(@PathVariable String articleId,@PathVariable String which,@PathVariable String commentId,@PathVariable String userId,@PathVariable String bool) {
-        if (which.equals("1")) {    // like:articleId:1 -- flComment:1--true
-            try {
-                commentService.likeComment(articleId,"flComment:" + commentId,userId, bool);
-            }catch (Exception e) {
-                e.printStackTrace();
+    @PutMapping("likeComment/{articleId}/{which}/{commentId}/{bool}")
+    public Result<Void> likeComment(@PathVariable String articleId,@PathVariable String which,@PathVariable String commentId,@PathVariable String bool,HttpServletRequest request) {
+        User user = (User) request.getAttribute("user");
+        if (user == null) {
+            return new Result<>(1,"noLogin",null);
+        }
+        else {
+            if (which.equals("1")) {    // like:articleId:1 -- flComment:1--true
+                try {
+                    commentService.likeComment(articleId,"flComment:" + commentId, String.valueOf(user.getUserId()), bool);
+                    return Result.successWithoutData();
+                }catch (Exception e) {
+                    e.printStackTrace();
+                    return Result.error();
+                }
+            }
+            else if (which.equals("2")) {
+                try {
+                    commentService.likeComment(articleId,"slComment:" + commentId, String.valueOf(user.getUserId()),bool);
+                    return Result.successWithoutData();
+                }catch (Exception e) {
+                    e.printStackTrace();
+                    return Result.error();
+                }
+            }
+            else {
                 return Result.error();
             }
         }
-        else if (which.equals("2")) {
-            try {
-
-                commentService.likeComment(articleId,"slComment:" + commentId, userId,bool);
-            }catch (Exception e) {
-                e.printStackTrace();
-                return Result.error();
-            }
-        }
-        return Result.successWithoutData();
     }
-    @PutMapping("dislikeComment/{articleId}/{userId}/{which}/{commentId}/{bool}")
-    public Result<Void> dislikeComment(@PathVariable String articleId,@PathVariable String which,@PathVariable String commentId,@PathVariable String userId,@PathVariable String bool) {
-        if (which.equals("1")) {    // like:articleId:1 -- flComment:1--true
-            try {
-                commentService.dislikeComment(articleId,"flComment:" + commentId,userId, bool);
-            }catch (Exception e) {
-                e.printStackTrace();
+    @PutMapping("dislikeComment/{articleId}/{which}/{commentId}/{bool}")
+    public Result<Void> dislikeComment(@PathVariable String articleId,@PathVariable String which,@PathVariable String commentId,@PathVariable String bool,HttpServletRequest request) {
+        User user = (User) request.getAttribute("user");
+        if (user == null) {
+            return new Result<>(1,"noLogin",null);
+        }
+        else {
+            if (which.equals("1")) {    // like:articleId:1 -- flComment:1--true
+                try {
+                    commentService.dislikeComment(articleId,"flComment:" + commentId, String.valueOf(user.getUserId()), bool);
+                    return Result.successWithoutData();
+                }catch (Exception e) {
+                    e.printStackTrace();
+                    return Result.error();
+                }
+            }
+            else if (which.equals("2")) {
+                try {
+                    commentService.dislikeComment(articleId,"slComment:" + commentId, String.valueOf(user.getUserId()),bool);
+                    return Result.successWithoutData();
+                }catch (Exception e) {
+                    e.printStackTrace();
+                    return Result.error();
+                }
+            }
+            else {
                 return Result.error();
             }
         }
-        else if (which.equals("2")) {
-            try {
-                System.out.println(!redisUtils.getDisLikeStatusOfComment(userId,commentId) && Boolean.parseBoolean(bool));
-                System.out.println(!redisUtils.getDisLikeStatusOfComment(userId,commentId));
-                System.out.println(bool);
-                commentService.dislikeComment(articleId,"slComment:" + commentId, userId,bool);
-            }catch (Exception e) {
-                e.printStackTrace();
-                return Result.error();
-            }
-        }
-        return Result.successWithoutData();
     }
 
-    @GetMapping("all-comments/{articleId}/{userId}")
-    Result<List<CommentGroup>> allCommentsOfArticle(@PathVariable Integer articleId,@PathVariable String userId){
-        List<CommentGroup> commentGroupList = commentService.getAllCommentsOfArticle(articleId,userId);
-        return Result.successWithData(commentGroupList);
+    @GetMapping("all-comments/{articleId}")
+    Result<List<CommentGroup>> allCommentsOfArticle(@PathVariable Integer articleId,HttpServletRequest request){
+        User user = (User) request.getAttribute("user");
+        if (user != null) {
+            List<CommentGroup> commentGroupList = commentService.getAllCommentsOfArticle(articleId, String.valueOf(user.getUserId()));
+            if (commentGroupList != null) {
+                return Result.successWithData(commentGroupList);
+            }
+            else {
+                return new Result<>(1,"评论为空",null);
+            }
+        }
+        else {
+            List<CommentGroup> commentGroupList = commentService.getAllCommentsOfArticleWithoutLogin(articleId);
+            if (commentGroupList != null) {
+                return Result.successWithData(commentGroupList);
+            }
+            else {
+                return new Result<>(1,"评论为空",null);
+            }
+        }
     }
 
     private boolean isUserAdmin(HttpServletRequest request) {

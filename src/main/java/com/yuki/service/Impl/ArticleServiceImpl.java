@@ -4,11 +4,13 @@ import com.yuki.Utils.MatrixOperationsUtils;
 import com.yuki.Utils.RedisUtils;
 import com.yuki.entity.Article;
 import com.yuki.entity.FLComment;
+import com.yuki.entity.LikeArticle;
 import com.yuki.mapper.ArticleMapper;
 import com.yuki.mapper.FLCommentMapper;
 import com.yuki.mapper.SLCommentMapper;
 import com.yuki.mapper.UserMapper;
 import com.yuki.service.ArticleService;
+import com.yuki.service.LikeArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,9 @@ public class ArticleServiceImpl implements ArticleService {
     private FLCommentMapper flCommentMapper;
     @Autowired
     private SLCommentMapper slCommentMapper;
+    @Autowired
+    private LikeArticleService likeArticleService;
+
     private static final String RATING_PREFIX = "rating:";
 
     @Override
@@ -58,25 +63,39 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
+    public List<Article> getArticlesInfoByTypeWithoutLogin(String type) {
+        List<Article> articles = articleMapper.getArticlesWithType(type);
+        for (Article article : articles) {
+            article.setNumOfLikes(redisUtils.getNumOfLikes(article.getArticleId()));
+            article.setNumOfDislikes(redisUtils.getNumOfDisikes(article.getArticleId()));
+            article.setNumOfSaves(redisUtils.getNumOfSaves(article.getArticleId()));
+            article.setNumOfComments(redisUtils.getNumOfComments(article.getArticleId()));
+            article.setFollowingCounts(redisUtils.getHashSize("following:"+article.getAuthorId()));
+            article.setFansCounts(redisUtils.getHashSize("fans:"+article.getAuthorId()));
+            article.setProfile(userMapper.getUserProfile(Integer.valueOf(article.getAuthorId())));
+        }
+        return articles;
+    }
+
+    @Override
     public List<Article> getAllArticles() {
         return articleMapper.getAllArticles();
     }
 
     //    存储数据同时对redis和mysql进行操作
     @Override
-    public void operationToArticle(String userId,String articleId, String operation, Boolean bool) {
+    public void operationToArticle(String userId,String articleId, String operation, Boolean bool,String userName) {
 //        如果已经点过收藏并且接下来要操作的值为false（取消收藏）的时候，才允许操作，此时操作为自减
         if (redisUtils.getSaveStatus(userId,articleId) && !bool && operation.equals("save")) {
             redisUtils.operateArticle(articleId,operation,false); // 此操作redis中save数量减一
             redisUtils.setSaveStatus(userId,articleId,false);    // 并且用户收藏状态为取消收藏
-//            if (operation.equals("save")) {
                 redisUtils.increment(RATING_PREFIX+userId,articleId,-5);
-//            }
         }
 //        如果还没点过收藏并且接下来要操作的值为true（收藏）的时候，才允许操作，此时操作为自增
         else if (!redisUtils.getSaveStatus(userId,articleId) && bool && operation.equals("save")) {
             redisUtils.operateArticle(articleId,operation,true); // 此操作redis中save数量加一
             redisUtils.setSaveStatus(userId,articleId,true); // 并且用户收藏状态为开始收藏
+
             if (!redisUtils.hasRatingKey(userId,articleId)) {
                 redisUtils.storeHashData(RATING_PREFIX+userId,articleId,"5");
             }
@@ -88,6 +107,7 @@ public class ArticleServiceImpl implements ArticleService {
             redisUtils.operateArticle(articleId,operation,false);
             redisUtils.setLikeStatus(userId,articleId,false);
             redisUtils.increment(RATING_PREFIX+userId,articleId,-3);
+//            likeArticleService.updateLikeArticleStatus(userId,userName,articleId,operation,true);
         }
         else if (!redisUtils.getLikeStatus(userId,articleId) && bool && operation.equals("like")) {
             redisUtils.operateArticle(articleId,operation,true);
