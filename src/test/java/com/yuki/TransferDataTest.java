@@ -13,7 +13,7 @@ public class TransferDataTest {
     @Test
     void test1() {
         LikeArticle likeArticle = new LikeArticle();
-        likeArticle.setArticleId(1);
+        likeArticle.setArticleId("1");
         likeArticle.setTitle("yes");
         likeArticle.setStatus("true");
         likeArticleMapper.likeArticle(likeArticle);

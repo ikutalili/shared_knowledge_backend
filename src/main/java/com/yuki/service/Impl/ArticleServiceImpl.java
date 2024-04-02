@@ -185,13 +185,14 @@ public class ArticleServiceImpl implements ArticleService {
                 indexOfTargetUser = i;
             }
             for (int j = 0; j < allArticleId.length; j++) {
-                Double rating = (Double) redisUtils.getHashData(RATING_PREFIX + allUserId[i], allArticleId[j]);
+                String rating = (String) redisUtils.getHashData(RATING_PREFIX + allUserId[i], allArticleId[j]);
                 Double average = redisUtils.getAverageValueOfHash(RATING_PREFIX + allUserId[i]);
                 // 如果评分为空，则赋值为平均数
                 if (rating == null) {
                     if (Double.isNaN(average)) {
 //                        正常情况下NaN代表没有值，用0填充，这里测试用随机数
-                        ratingMatrix[i][j] = 1 + rand.nextDouble() * 9;
+//                        ratingMatrix[i][j] = 1 + rand.nextDouble() * 9;
+                        ratingMatrix[i][j] = 0.0;
                     }
                     else {
 //                        如果平均值不为空，用平均值填充
@@ -208,7 +209,7 @@ public class ArticleServiceImpl implements ArticleService {
                 }
                 else {
                     System.out.println("if rating is not null");
-                    ratingMatrix[i][j] = rating;
+                    ratingMatrix[i][j] = Double.parseDouble(rating);
                     System.out.println(Arrays.deepToString(ratingMatrix));
                 }
             }
@@ -244,14 +245,14 @@ public class ArticleServiceImpl implements ArticleService {
             score[i] = max;
             index.add(i1);
         }
-        System.out.println("推荐列表矩阵每行最大的数值");
+        System.out.println("推荐列表矩阵每行最大的数值(一般取10个)");
         System.out.println(Arrays.toString(score));
-        System.out.println("最大值对应的下标");
+        System.out.println("这10个最大值对应的下标");
         System.out.println(index);
-        System.out.println("allUserId");
+        System.out.println("allUserId数组");
         System.out.println(Arrays.toString(allUserId));
         System.out.println("目标用户的下标---"+indexOfTargetUser);
-        System.out.println("目标用户对应的那一行");
+        System.out.println("目标用户在推荐矩阵中对应的那一行");
         System.out.println(Arrays.toString(recommendMatrix[indexOfTargetUser]));
 
         Double[] recommendList = recommendMatrix[indexOfTargetUser];
@@ -274,9 +275,15 @@ public class ArticleServiceImpl implements ArticleService {
 //        根据最大元素（最应该推荐的文章）的下标，获取对应文章的id进行推荐
         System.out.println("所有文章id数组");
         System.out.println(Arrays.toString(allArticleId));
+        List<Article> articles = new ArrayList<>();
         for (Integer eachIndex : top10Index) {
             System.out.println("对应的文章id--"+allArticleId[eachIndex]);
+            Article article = new Article();
+            article = articleMapper.getArticleById(Integer.valueOf(allArticleId[eachIndex]));
+            articles.add(article);
         }
+
+        return articles;
         /*
         * Double[] array = {1.0, 2.0, 3.0, 4.0, 5.0};
         List<Double> list = new ArrayList<>(Arrays.asList(array));
@@ -309,6 +316,5 @@ public class ArticleServiceImpl implements ArticleService {
 //            e.printStackTrace();
 //        }
 
-        return null;
     }
 }

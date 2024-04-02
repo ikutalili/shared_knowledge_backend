@@ -77,7 +77,6 @@ public class ArticleController {
         else {
             return Result.error();
         }
-
     };
 
     @PutMapping("report-article/{reason}/{articleId}")

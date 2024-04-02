@@ -18,9 +18,11 @@ public interface ArticleMapper {
     List<Article> getArticlesWithType(String type);
 
 //    现在是按需查询，因为有一部分字段从redis中获取，不需要查mysql
-    @Select("select article_id, author_id,author_name,avatar,article_title,article_url,article_type," +
-            "article_cover_url,article_images,publish_time from articles where article_id = #{articleId}")
-    Article getArticleById(Integer articleId);
+//    @Select("select article_id, author_id,author_name,avatar,article_title,article_url,article_type," +
+//            "article_cover_url,article_images,publish_time from articles where article_id = #{articleId}")
+//    Article getArticleById(Integer articleId);
+    @Select("select * from articles where article_id = #{id}")
+    Article getArticleById(Integer id);
 //    存放文章图片到数据库
     @Update("UPDATE articles SET " +
             "article_cover_url = #{fileName},modify_time = now() WHERE " +

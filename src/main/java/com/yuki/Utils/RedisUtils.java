@@ -85,13 +85,14 @@ public class RedisUtils {
         // 将Object类型的列表转换为Integer类型的列表
         List<Integer> integerValues = values.stream()
                 .filter(Objects::nonNull)
-                .map(o -> (Integer) o).toList();
+                .map(o -> Integer.parseInt((String) o)).toList();
         // 计算平均值
         return integerValues.stream()
                 .mapToInt(Integer::intValue)
                 .average()
                 .orElse(Double.NaN); // 如果没有值，则返回NaN
     }
+
 
     public Long getHashSize(String key) {
         return ops.size(key);
