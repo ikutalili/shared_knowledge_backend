@@ -10,6 +10,12 @@ import java.util.List;
 public interface ArticleMapper {
     List<Article> getArticlesOfRecommendation();
 
+//    查询排行榜文章，点赞数前十
+//    @Select("select * from articles order by num_of_likes desc limit 10")
+    List<Article> getHotArticles();
+//    为未登录的用户提供推荐文章
+    @Select("select * from articles order by num_of_saves desc limit 10")
+    List<Article> getRecommendArticlesForNoLogin();
     @Select("select article_title from articles")
     String getTitleById(Integer articleId);
     @Select("select * from articles")

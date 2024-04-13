@@ -30,9 +30,18 @@ public class ArticleController {
         //        通过文章类别去查询每一类别下的所有文章
 //       List<Article> articles = articleService.getArticlesInfoWithType(type,userId);
        if (user != null) {
-           articles = articleService.getArticlesInfoWithType(type, String.valueOf(user.getUserId()));
-           System.out.println(user.getUserId());
+           if (type.equals("推荐")) {
+               articles = articleService.recommendArticlesForUser(user.getUserId());
+           }
+           else if (type.equals("排行榜")) {
+               articles = articleService.getHotArticles(String.valueOf(user.getUserId()));
+           }
+           else {
+               articles = articleService.getArticlesInfoWithType(type, String.valueOf(user.getUserId()));
+           }
+           System.out.println(articles);
            if (articles != null) {
+//               System.out.println("用户已登录--------------");
                return Result.successWithData(articles);
            }
            else {
@@ -41,8 +50,17 @@ public class ArticleController {
        }
        else {
 //           如果用户未登录，返回默认数据
-           articles = articleService.getArticlesInfoByTypeWithoutLogin(type);
+           if (type.equals("排行榜")) {
+               articles = articleService.getHotArticlesForNoLogin();
+           }
+           else if (type.equals("推荐")) {
+               articles = articleService.recommendArticlesForNoLogin();
+           }
+           else {
+               articles = articleService.getArticlesInfoByTypeWithoutLogin(type);
+           }
            if (articles != null) {
+//               System.out.println("用户未登录");
                return Result.successWithData(articles);
            }
            else {
@@ -57,6 +75,7 @@ public class ArticleController {
         User user = (User) request.getAttribute("user") ;
         if (user != null) {
             try {
+//                System.out.println("对文章进行了操作---------");
                 articleService.operationToArticle(String.valueOf(user.getUserId()),articleId,operation,bool,user.getUserName());
                 return Result.successWithoutData();
             }

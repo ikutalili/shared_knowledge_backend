@@ -9,6 +9,11 @@ public interface ArticleService {
     List<Article> getAllArticles();
 
     List<Article> getArticlesInfoByTypeWithoutLogin(String type);
+//    为用户提供排行榜文章，无论是否登录，都提供点赞数前十的文章
+    List<Article> getHotArticles(String userId);
+    List<Article> getHotArticlesForNoLogin();
+//   为未登录 提供推荐文章
+    List<Article> recommendArticlesForNoLogin();
 //    添加文章封面
     void addArticleCover(String fileName);
 

@@ -47,6 +47,7 @@ public class ArticleServiceImpl implements ArticleService {
             article.setLike(redisUtils.getLikeStatus(userId,article.getArticleId()));
             article.setDislike(redisUtils.getDISLikeStatus(userId,article.getArticleId()));
             article.setSave(redisUtils.getSaveStatus(userId,article.getArticleId()));
+//            这些数据虽然mysql中有，但是优先从redis中获取
             article.setNumOfLikes(redisUtils.getNumOfLikes(article.getArticleId()));
             article.setNumOfDislikes(redisUtils.getNumOfDisikes(article.getArticleId()));
             article.setNumOfSaves(redisUtils.getNumOfSaves(article.getArticleId()));
@@ -237,7 +238,7 @@ public class ArticleServiceImpl implements ArticleService {
 
         Double[] score = new Double[allUserId.length];
         List<Integer> index = new ArrayList<>();
-        for (int i = 0,j = 0; i < allUserId.length; i++) {
+        for (int i = 0; i < allUserId.length; i++) {
 //            j < allArticleId.length;
             List<Double> aList = new ArrayList<>((Arrays.asList(recommendMatrix[i])));
             Double max = Collections.max(aList);
@@ -266,7 +267,7 @@ public class ArticleServiceImpl implements ArticleService {
         // 获取前十个元素的下标
         List<Integer> top10Index = new ArrayList<>();
 //        Math.min(3, scoreIndexList.size()); 中的 3 代表获取最大的元素
-        for (int i = 0; i < Math.min(3, scoreIndexList.size()); i++) {
+        for (int i = 0; i < Math.min(10, scoreIndexList.size()); i++) {
             top10Index.add(scoreIndexList.get(i).getValue());
         }
 
@@ -282,7 +283,22 @@ public class ArticleServiceImpl implements ArticleService {
             article = articleMapper.getArticleById(Integer.valueOf(allArticleId[eachIndex]));
             articles.add(article);
         }
-
+//        System.out.println(articles);
+        for (Article article : articles) {
+            article.setLike(redisUtils.getLikeStatus(String.valueOf(targetUserId),article.getArticleId()));
+            article.setDislike(redisUtils.getDISLikeStatus(String.valueOf(targetUserId),article.getArticleId()));
+            article.setSave(redisUtils.getSaveStatus(String.valueOf(targetUserId),article.getArticleId()));
+            //            这些数据虽然mysql中有，但是优先从redis中获取
+            article.setNumOfLikes(redisUtils.getNumOfLikes(article.getArticleId()));
+            article.setNumOfDislikes(redisUtils.getNumOfDisikes(article.getArticleId()));
+            article.setNumOfSaves(redisUtils.getNumOfSaves(article.getArticleId()));
+            article.setNumOfComments(redisUtils.getNumOfComments(article.getArticleId()));
+            String hasFollowed = (String) redisUtils.getHashData("following:" + targetUserId, article.getAuthorId());
+            article.setHasFollowed(hasFollowed == null ? "false" : "true");
+            article.setFollowingCounts(redisUtils.getHashSize("following:"+article.getAuthorId()));
+            article.setFansCounts(redisUtils.getHashSize("fans:"+article.getAuthorId()));
+            article.setProfile(userMapper.getUserProfile(Integer.valueOf(article.getAuthorId())));
+        }
         return articles;
         /*
         * Double[] array = {1.0, 2.0, 3.0, 4.0, 5.0};
@@ -316,5 +332,36 @@ public class ArticleServiceImpl implements ArticleService {
 //            e.printStackTrace();
 //        }
 
+    }
+
+    @Override
+    public List<Article> getHotArticles(String userId) {
+        List<Article> hotArticles = articleMapper.getHotArticles();
+        for (Article hotArticle : hotArticles) {
+            hotArticle.setLike(redisUtils.getLikeStatus(userId,hotArticle.getArticleId()));
+            hotArticle.setDislike(redisUtils.getDISLikeStatus(userId,hotArticle.getArticleId()));
+            hotArticle.setSave(redisUtils.getSaveStatus(userId,hotArticle.getArticleId()));
+
+            hotArticle.setNumOfLikes(redisUtils.getNumOfLikes(hotArticle.getArticleId()));
+            hotArticle.setNumOfDislikes(redisUtils.getNumOfDisikes(hotArticle.getArticleId()));
+            hotArticle.setNumOfSaves(redisUtils.getNumOfSaves(hotArticle.getArticleId()));
+            hotArticle.setNumOfComments(redisUtils.getNumOfComments(hotArticle.getArticleId()));
+            String hasFollowed = (String) redisUtils.getHashData("following:" + userId, hotArticle.getAuthorId());
+            hotArticle.setHasFollowed(hasFollowed == null ? "false" : "true");
+            hotArticle.setFollowingCounts(redisUtils.getHashSize("following:"+hotArticle.getAuthorId()));
+            hotArticle.setFansCounts(redisUtils.getHashSize("fans:"+hotArticle.getAuthorId()));
+            hotArticle.setProfile(userMapper.getUserProfile(Integer.valueOf(hotArticle.getAuthorId())));
+        }
+        return hotArticles;
+    }
+
+    @Override
+    public List<Article> getHotArticlesForNoLogin() {
+        return articleMapper.getHotArticles();
+    }
+
+    @Override
+    public List<Article> recommendArticlesForNoLogin() {
+        return articleMapper.getRecommendArticlesForNoLogin();
     }
 }

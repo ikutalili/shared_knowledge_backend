@@ -20,7 +20,7 @@ public class CaptchasUtils {
     public void sendCodeToEmail(String toEmail) {
 
         Random random = new Random();
-        int num = 1000 + random.nextInt(900000);
+        int num = 100000 + random.nextInt(900000);
 
         String content = "你的一次性验证码为："+ num +" 有效期 3 分钟，若不是你的操作，请忽略。";
 
