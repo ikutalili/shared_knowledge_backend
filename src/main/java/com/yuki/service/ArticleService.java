@@ -6,8 +6,9 @@ import java.util.List;
 
 public interface ArticleService {
     List<Article> getArticlesInfoWithType(String type,String userId);
+    List<Article> initializeArticleForNewUser(String type,String type1,String type2);
     List<Article> getAllArticles();
-
+    List<Article> searchArticle(String keyword);
     List<Article> getArticlesInfoByTypeWithoutLogin(String type);
 //    为用户提供排行榜文章，无论是否登录，都提供点赞数前十的文章
     List<Article> getHotArticles(String userId);

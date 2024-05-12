@@ -5,6 +5,7 @@ import com.yuki.Utils.JwtUtils;
 import com.yuki.Utils.PasswordUtils;
 import com.yuki.Utils.RedisUtils;
 import com.yuki.entity.Result;
+import com.yuki.entity.SocialNetwork;
 import com.yuki.entity.User;
 import com.yuki.mapper.UserMapper;
 import com.yuki.service.UserService;
@@ -91,7 +92,6 @@ public class UserController {
         else {
             return Result.error();  //只要是正确的数据，就不会返回错误信息
         }
-
     }
     @PostMapping("register")
     public Result<Map<String,User>> userRegister(String userName,String email,String password,Integer gender,String captcha) {
@@ -99,7 +99,7 @@ public class UserController {
         if (userName != null && email != null && password != null && captcha != null && (gender == 0 || gender == 1)) {
             String token = userService.addUser(userName, email, password, gender,captcha);
             if (token.equals("dataError")) {
-//                System.out.println("1------"+token);
+                System.out.println("1------"+token);
                 return Result.error();
 
             }
@@ -116,7 +116,7 @@ public class UserController {
             }
         }
        else {
-           return Result.error();
+            return Result.error();
         }
 
     }
@@ -153,12 +153,17 @@ public class UserController {
     public Result<Void> logOut(HttpServletRequest request) {
         String token = (String) request.getAttribute("token");
         System.out.println("logout-token" + token);
-        Boolean logout = redisUtils.removeToken(token);
-        if (logout == null || !logout) {
-            return Result.error();
-        }
-        else {
-            return Result.successWithoutData();
+        if (token == null || token.isEmpty()) {
+            // handle empty token
+            return Result.successWithoutData(); // No Login
+        } else {
+            Boolean logout = redisUtils.removeToken(token);
+            if (logout == null || !logout) {
+                return Result.error();
+            }
+            else {
+                return Result.successWithoutData();
+            }
         }
     }
 
@@ -240,9 +245,35 @@ public class UserController {
                 userService.deleteUser(userId);
                 return Result.successWithoutData();
             }catch (Exception e) {
+                e.printStackTrace();
                 return Result.error();
             }
         }
         return Result.error();
+    }
+    @PutMapping("lock-user/{userId}")
+    public Result<Void> lockUser(@PathVariable Integer userId,HttpServletRequest request) {
+        if (isLogin(request)) {
+            try {
+                userMapper.lockUser(userId);
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Result.error();
+            }
+        }
+        return Result.successWithoutData();
+    }
+
+    @GetMapping("view-user-social-network")
+    public Result<SocialNetwork> viewUserSocialNetwork(HttpServletRequest request) {
+        User user = (User) request.getAttribute("user");
+        if (isLogin(request)) {
+            SocialNetwork userRelationShip = userService.getUserRelationShip(String.valueOf(user.getUserId()));
+            return Result.successWithData(userRelationShip);
+        }
+        else {
+            return Result.error();
+        }
+
     }
 }

@@ -14,4 +14,18 @@
         from articles
         where article_type = #{type}
     </select>
+
+    <select id="getArticleWithTypeAndLimit" resultType="article">
+        select article_id, author_id,author_name,avatar,article_title,article_url,article_type,
+        article_cover_url,article_images,preview,publish_time
+        from articles
+        where article_type = #{type}
+        limit 5
+    </select>
+    <select id="getHotArticles" resultType="article">
+        select article_id, author_id,author_name,avatar,article_title,article_url,article_type,
+        article_cover_url,article_images,preview,publish_time
+        from articles
+        order by num_of_likes desc limit 10
+    </select>
 </mapper>

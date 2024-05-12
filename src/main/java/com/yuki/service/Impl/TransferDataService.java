@@ -2,6 +2,7 @@ package com.yuki.service.Impl;
 
 import com.yuki.Utils.RedisUtils;
 import com.yuki.mapper.ArticleMapper;
+import com.yuki.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -14,8 +15,10 @@ public class TransferDataService {
     private RedisUtils redisUtils;
     @Autowired
     private ArticleMapper articleMapper;
+    @Autowired
+    private UserMapper userMapper;
 
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 10000)
     @Transactional
     public void transferData() {
         String[] allArticleId = articleMapper.getAllArticleId();
@@ -24,9 +27,17 @@ public class TransferDataService {
 //            此处点赞状态等不需要进行同步，因为mysql数据库中并没有相应字段
 //            更新点赞，点踩，收藏，评论数量
             articleMapper.updateLikesById(Integer.parseInt(articleId),redisUtils.getNumOfLikes(articleId));
-            articleMapper.updateDislikesById(Integer.parseInt(articleId),redisUtils.getNumOfDisikes(articleId));
+            articleMapper.updateDislikesById(Integer.parseInt(articleId),redisUtils.getNumOfDislikes(articleId));
             articleMapper.updateSavesById(Integer.parseInt(articleId),redisUtils.getNumOfSaves(articleId));
             articleMapper.updateCommentsById(Integer.parseInt(articleId),redisUtils.getNumOfComments(articleId));
+
+            Integer[] allUserId = userMapper.getAllUserId();
+            for (Integer userId : allUserId) {
+                Long followings = redisUtils.getHashSize("following:" + userId);
+                Long fans = redisUtils.getHashSize("fans:" + userId);
+                userMapper.updateFollowings(followings.intValue(),userId);
+                userMapper.updateFans(fans.intValue(),userId);
+            }
         }
     }
 

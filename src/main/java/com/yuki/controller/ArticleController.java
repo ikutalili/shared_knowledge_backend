@@ -23,8 +23,19 @@ public class ArticleController {
         User user = (User) request.getAttribute("user");
         return user != null;
     }
-    @GetMapping("list/{type}")
-    public Result<List<Article>> getArticleInfo(@PathVariable String type, HttpServletRequest request) {
+    @GetMapping("search/{keyword}")
+    public Result<List<Article>> searchArticle(@PathVariable String keyword) {
+        List<Article> articles = articleService.searchArticle(keyword);
+        System.out.println(articles);
+        if (articles != null) {
+            return Result.successWithData(articles);
+        }
+        else {
+            return Result.error();
+        }
+    }
+    @GetMapping(value = {"list/{type}/{type1}/{type2}","list/{type}","list/{type}/{type2}","list/{type}/{type1}","list/{type}//","list/{type}///"})
+    public Result<List<Article>> getArticleInfo(@PathVariable String type, @PathVariable(required = false) String type1,@PathVariable(required = false) String type2, HttpServletRequest request) {
         User user = (User) request.getAttribute("user") ;
         List<Article> articles;
         //        通过文章类别去查询每一类别下的所有文章
@@ -36,7 +47,13 @@ public class ArticleController {
            else if (type.equals("排行榜")) {
                articles = articleService.getHotArticles(String.valueOf(user.getUserId()));
            }
+           else if ((type1 != null && !type1.isEmpty()) || (type2 != null && !type2.isEmpty())) {
+               System.out.println("type1 and type2 is not null");
+               System.out.println(type1 + "----" + type2);
+               articles = articleService.initializeArticleForNewUser(type,type1,type2);
+           }
            else {
+               System.out.println("type1 and type2 is null ----------");
                articles = articleService.getArticlesInfoWithType(type, String.valueOf(user.getUserId()));
            }
            System.out.println(articles);
@@ -100,6 +117,7 @@ public class ArticleController {
 
     @PutMapping("report-article/{reason}/{articleId}")
     public Result<Void> reportArticle(@PathVariable String reason,@PathVariable Integer articleId,HttpServletRequest request) {
+//        User user = (User) request.getAttribute("user");
         if(isLogin(request)) {
             try {
                 articleService.reportArticle(reason,articleId);

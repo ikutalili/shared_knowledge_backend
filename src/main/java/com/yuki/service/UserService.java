@@ -1,5 +1,6 @@
 package com.yuki.service;
 
+import com.yuki.entity.SocialNetwork;
 import com.yuki.entity.User;
 import org.springframework.stereotype.Service;
 
@@ -42,4 +43,6 @@ public interface UserService {
 
 //    获取所有用户id
     Integer[] getAllUserId();
+
+    SocialNetwork getUserRelationShip(String userId);
 }

@@ -4,16 +4,18 @@ import com.yuki.Utils.CaptchasUtils;
 import com.yuki.Utils.JwtUtils;
 import com.yuki.Utils.PasswordUtils;
 import com.yuki.Utils.RedisUtils;
-import com.yuki.entity.Result;
+import com.yuki.entity.Article;
+import com.yuki.entity.SocialNetwork;
 import com.yuki.entity.User;
+import com.yuki.mapper.ArticleMapper;
 import com.yuki.mapper.UserMapper;
 import com.yuki.service.UserService;
-import org.apache.ibatis.exceptions.TooManyResultsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,8 @@ public class UserServiceImpl implements UserService {
     private StringRedisTemplate stringRedisTemplate;
     @Autowired
     private RedisUtils redisUtils;
+    @Autowired
+    private ArticleMapper articleMapper;
     private static final String PASSWORD_LENGTH_PATTERN = "^.{8,16}$";
     private static final String USERNAME_LENGTH_PATTERN = "^.{1,100}$";
     private static final String EMAIL_PATTERN = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
@@ -48,7 +52,10 @@ public class UserServiceImpl implements UserService {
     public User getUserInfoByToken(String token) {
         Map<String, Object> userInfo = JwtUtils.parseTokenToGetUserInfo(token);
         Object userId = userInfo.get("userId");
-        return userMapper.selectById((Integer) userId);
+        User user = userMapper.selectById((Integer) userId);
+        Integer[] numOfArticles = userMapper.getNumOfArticlesByUserId((Integer) userId);
+        user.setNumOfArticles(numOfArticles.length);
+        return user;
     }
 
     //    用户注册
@@ -227,5 +234,87 @@ public class UserServiceImpl implements UserService {
     @Override
     public Integer[] getAllUserId() {
         return userMapper.getAllUserId();
+    }
+
+//    Map<Object, Object> fans = redisUtils.getAllHashData("fans:60");
+//    Map<Object, Object> followings = redisUtils.getAllHashData("following:60");
+//    Map<Object, Object> likes = redisUtils.getAllHashData("like:user:60");
+//    Map<Object, Object> saves = redisUtils.getAllHashData("save:user:60");
+    public List<Article> addStatusForArticle(List<Article> articles,String userId) {
+        for (Article article : articles) {
+//            查询，即获取数据只对redis操作
+//            此处设置点赞状态，非点赞数量,存取都对redis进行操作，而后再将redis数据同步到mysql，此处应是对点赞状态的 取 ，是初始化加载的状态
+//            这三个mysql中没有的字段，从来不向mysql进行读操作，只进行存放数据
+            if (article != null) {
+                article.setLike(redisUtils.getLikeStatus(userId,article.getArticleId()));
+                article.setDislike(redisUtils.getDISLikeStatus(userId,article.getArticleId()));
+                article.setSave(redisUtils.getSaveStatus(userId,article.getArticleId()));
+//            这些数据虽然mysql中有，但是优先从redis中获取
+                article.setNumOfLikes(redisUtils.getNumOfLikes(article.getArticleId()));
+                article.setNumOfDislikes(redisUtils.getNumOfDislikes(article.getArticleId()));
+                article.setNumOfSaves(redisUtils.getNumOfSaves(article.getArticleId()));
+                article.setNumOfComments(redisUtils.getNumOfComments(article.getArticleId()));
+                String hasFollowed = (String) redisUtils.getHashData("following:" + userId, article.getAuthorId());
+                article.setHasFollowed(hasFollowed == null ? "false" : "true");
+                article.setFollowingCounts(redisUtils.getHashSize("following:"+article.getAuthorId()));
+                article.setFansCounts(redisUtils.getHashSize("fans:"+article.getAuthorId()));
+                article.setProfile(userMapper.getUserProfile(Integer.valueOf(article.getAuthorId())));
+            }
+//            每篇文章的评论数量已重新计算赋值，是从两张评论表中分别查询计算出来的，至于数据库中的原有评论数量字段，到时候统一定时从redis中同步
+//            article.setNumOfComments(sizeOfAllComments);
+        }
+        return articles;
+    }
+    @Override
+    public SocialNetwork getUserRelationShip(String userId) {
+        SocialNetwork userSocialNetwork = new SocialNetwork();
+        Map<Object, Object> fans = redisUtils.getAllHashData("fans:" + userId);
+        Map<Object, Object> followingsMap = redisUtils.getAllHashData("following:" + userId);
+        Map<Object, Object> likesMap = redisUtils.getAllHashData("like:user:" + userId);
+        Map<Object, Object> savesMap = redisUtils.getAllHashData("save:user:" + userId);
+        List<User> Fans = new ArrayList<>();
+        List<User> followings = new ArrayList<>();
+        List<Article> saves = new ArrayList<>();
+        List<Article> likes = new ArrayList<>();
+        List<Article> write;
+        for (Object key : fans.keySet()) {
+            String o = (String) fans.get(key);
+            if ("true".equals(o)) {
+                User user = userMapper.selectById((Integer.parseInt((String) key)));
+                Fans.add(user);
+            }
+        }
+        for (Object key : followingsMap.keySet()) {
+            String o = (String) followingsMap.get(key);
+            if ("true".equals(o)) {
+                User user = userMapper.selectById((Integer.parseInt((String) key)));
+                followings.add(user);
+            }
+        }
+        for (Object key : savesMap.keySet()) {
+            String o = (String) savesMap.get(key);
+            if ("true".equals(o)) {
+                Article saveArticles = articleMapper.getArticleById((Integer.parseInt((String) key)));
+                saves.add(saveArticles);
+            }
+        }
+        for (Object key : likesMap.keySet()) {
+            String o = (String) likesMap.get(key);
+            if ("true".equals(o)) {
+                Article likeArticles = articleMapper.getArticleById((Integer.parseInt((String) key)));
+                likes.add(likeArticles);
+            }
+        }
+        write = articleMapper.getArticlesByUserId(Integer.valueOf(userId));
+        try {
+            userSocialNetwork.setWrite(addStatusForArticle(write,userId));
+            userSocialNetwork.setFans(Fans);
+            userSocialNetwork.setFollowings(followings);
+            userSocialNetwork.setSaves(addStatusForArticle(saves,userId));
+            userSocialNetwork.setLikes(addStatusForArticle(likes,userId));
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        return userSocialNetwork;
     }
 }

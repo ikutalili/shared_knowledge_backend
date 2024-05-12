@@ -11,7 +11,20 @@ public interface UserMapper {
     User selectById(Integer userId);
     @Select("select * from users")
     List<User> getAllUsers();
-//    @Insert("")
+//    禁用用户帐号
+    @Update("update users set reported = 2 where user_id = #{id}")
+    void lockUser(Integer id);
+//    举报用户
+    @Update("update users set reported = 1 where user_id = #{id}")
+    void reportUser(Integer id);
+//   获取作者创作的 文章数量
+    @Select("select * from articles where author_id = #{id}")
+    Integer[] getNumOfArticlesByUserId(Integer id);
+//    更新关注，粉丝数量
+    @Update("update users set following = #{following} where user_id = #{id}")
+    void updateFollowings(Integer following,Integer id);
+    @Update("update users set followed = #{fans} where user_id = #{id}")
+    void updateFans(Integer fans,Integer id);
     @Insert("INSERT INTO users (user_name,gender,email,password,registration_time,modify_time)" +
             "VALUES (#{userName},#{gender},#{email},#{password},now(),now() )")
     boolean addUser(String userName,String email, String password,Integer gender);

@@ -13,6 +13,8 @@ public interface ArticleMapper {
 //    查询排行榜文章，点赞数前十
 //    @Select("select * from articles order by num_of_likes desc limit 10")
     List<Article> getHotArticles();
+    @Select("select * from articles where article_title like CONCAT('%', #{keyword}, '%')")
+    List<Article> getArticleByKeyWord(String keyword);
 //    为未登录的用户提供推荐文章
     @Select("select * from articles order by num_of_saves desc limit 10")
     List<Article> getRecommendArticlesForNoLogin();
@@ -23,6 +25,11 @@ public interface ArticleMapper {
 //    根据传入的类型确定要得到哪个分类下的文章信息
     List<Article> getArticlesWithType(String type);
 
+    List<Article> getArticleWithTypeAndLimit(String type);
+
+//    获取某个作者所写的所有文章
+    @Select("select * from articles where author_id = #{userId}")
+    List<Article> getArticlesByUserId(Integer userId);
 //    现在是按需查询，因为有一部分字段从redis中获取，不需要查mysql
 //    @Select("select article_id, author_id,author_name,avatar,article_title,article_url,article_type," +
 //            "article_cover_url,article_images,publish_time from articles where article_id = #{articleId}")

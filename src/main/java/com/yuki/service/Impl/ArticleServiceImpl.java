@@ -3,8 +3,6 @@ package com.yuki.service.Impl;
 import com.yuki.Utils.MatrixOperationsUtils;
 import com.yuki.Utils.RedisUtils;
 import com.yuki.entity.Article;
-import com.yuki.entity.FLComment;
-import com.yuki.entity.LikeArticle;
 import com.yuki.mapper.ArticleMapper;
 import com.yuki.mapper.FLCommentMapper;
 import com.yuki.mapper.SLCommentMapper;
@@ -16,8 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 
 @Service
@@ -49,7 +45,7 @@ public class ArticleServiceImpl implements ArticleService {
             article.setSave(redisUtils.getSaveStatus(userId,article.getArticleId()));
 //            这些数据虽然mysql中有，但是优先从redis中获取
             article.setNumOfLikes(redisUtils.getNumOfLikes(article.getArticleId()));
-            article.setNumOfDislikes(redisUtils.getNumOfDisikes(article.getArticleId()));
+            article.setNumOfDislikes(redisUtils.getNumOfDislikes(article.getArticleId()));
             article.setNumOfSaves(redisUtils.getNumOfSaves(article.getArticleId()));
             article.setNumOfComments(redisUtils.getNumOfComments(article.getArticleId()));
             String hasFollowed = (String) redisUtils.getHashData("following:" + userId, article.getAuthorId());
@@ -68,7 +64,7 @@ public class ArticleServiceImpl implements ArticleService {
         List<Article> articles = articleMapper.getArticlesWithType(type);
         for (Article article : articles) {
             article.setNumOfLikes(redisUtils.getNumOfLikes(article.getArticleId()));
-            article.setNumOfDislikes(redisUtils.getNumOfDisikes(article.getArticleId()));
+            article.setNumOfDislikes(redisUtils.getNumOfDislikes(article.getArticleId()));
             article.setNumOfSaves(redisUtils.getNumOfSaves(article.getArticleId()));
             article.setNumOfComments(redisUtils.getNumOfComments(article.getArticleId()));
             article.setFollowingCounts(redisUtils.getHashSize("following:"+article.getAuthorId()));
@@ -142,7 +138,19 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
+    public List<Article> initializeArticleForNewUser(String type, String type1, String type2) {
+        List<Article> articles = articleMapper.getArticleWithTypeAndLimit(type);
+        articles.addAll(articleMapper.getArticleWithTypeAndLimit(type1));
+        articles.addAll(articleMapper.getArticleWithTypeAndLimit(type2));
+        System.out.println("--------------------");
+        System.out.println(articles);
+        return articles;
+    }
+
+    @Override
     public void reportArticle(String reason,Integer articleId) {
+        Article article = articleMapper.getArticleById(articleId);
+        userMapper.reportUser(Integer.valueOf(article.getAuthorId()));
         articleMapper.reportArticle(reason,articleId);
     }
 
@@ -159,6 +167,11 @@ public class ArticleServiceImpl implements ArticleService {
         else {
             redisUtils.increment(RATING_PREFIX+userId,articleId,1);
         }
+    }
+
+    @Override
+    public List<Article> searchArticle(String keyword) {
+        return articleMapper.getArticleByKeyWord(keyword);
     }
 
     @Override
@@ -290,7 +303,7 @@ public class ArticleServiceImpl implements ArticleService {
             article.setSave(redisUtils.getSaveStatus(String.valueOf(targetUserId),article.getArticleId()));
             //            这些数据虽然mysql中有，但是优先从redis中获取
             article.setNumOfLikes(redisUtils.getNumOfLikes(article.getArticleId()));
-            article.setNumOfDislikes(redisUtils.getNumOfDisikes(article.getArticleId()));
+            article.setNumOfDislikes(redisUtils.getNumOfDislikes(article.getArticleId()));
             article.setNumOfSaves(redisUtils.getNumOfSaves(article.getArticleId()));
             article.setNumOfComments(redisUtils.getNumOfComments(article.getArticleId()));
             String hasFollowed = (String) redisUtils.getHashData("following:" + targetUserId, article.getAuthorId());
@@ -343,7 +356,7 @@ public class ArticleServiceImpl implements ArticleService {
             hotArticle.setSave(redisUtils.getSaveStatus(userId,hotArticle.getArticleId()));
 
             hotArticle.setNumOfLikes(redisUtils.getNumOfLikes(hotArticle.getArticleId()));
-            hotArticle.setNumOfDislikes(redisUtils.getNumOfDisikes(hotArticle.getArticleId()));
+            hotArticle.setNumOfDislikes(redisUtils.getNumOfDislikes(hotArticle.getArticleId()));
             hotArticle.setNumOfSaves(redisUtils.getNumOfSaves(hotArticle.getArticleId()));
             hotArticle.setNumOfComments(redisUtils.getNumOfComments(hotArticle.getArticleId()));
             String hasFollowed = (String) redisUtils.getHashData("following:" + userId, hotArticle.getAuthorId());
@@ -357,7 +370,17 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public List<Article> getHotArticlesForNoLogin() {
-        return articleMapper.getHotArticles();
+        List<Article> hotArticles = articleMapper.getHotArticles();
+        for (Article hotArticle : hotArticles) {
+                hotArticle.setNumOfLikes(redisUtils.getNumOfLikes(hotArticle.getArticleId()));
+                hotArticle.setNumOfDislikes(redisUtils.getNumOfDislikes(hotArticle.getArticleId()));
+                hotArticle.setNumOfSaves(redisUtils.getNumOfSaves(hotArticle.getArticleId()));
+                hotArticle.setNumOfComments(redisUtils.getNumOfComments(hotArticle.getArticleId()));
+                hotArticle.setFollowingCounts(redisUtils.getHashSize("following:"+hotArticle.getAuthorId()));
+                hotArticle.setFansCounts(redisUtils.getHashSize("fans:"+hotArticle.getAuthorId()));
+                hotArticle.setProfile(userMapper.getUserProfile(Integer.valueOf(hotArticle.getAuthorId())));
+            }
+            return hotArticles;
     }
 
     @Override

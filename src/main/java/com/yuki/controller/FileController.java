@@ -158,7 +158,6 @@ public class FileController {
         if (!htmlFile.exists()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
         StreamingResponseBody stream = out -> {
             try (BufferedReader reader = new BufferedReader(new FileReader(htmlFile))) {
                 String line;

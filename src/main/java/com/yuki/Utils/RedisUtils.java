@@ -7,12 +7,10 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
 
-import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Component
 public class RedisUtils {
@@ -62,10 +60,11 @@ public class RedisUtils {
     public void storeHashData(String key,Object field,Object value) {
         ops.put(key,field,value);
     }
+//    通过key，和字段名得到某一条确切的哈希数据
     public Object getHashData(String key, Object field) {
         return ops.get(key,field);
     }
-
+//      仅通过key，获取某条key下的所有哈希数据。
     public Map<Object,Object> getAllHashData(String hashKey) {
         return ops.entries(hashKey);
     }
@@ -260,7 +259,7 @@ public boolean hasRatingKey(String userId,Object articleId) {
             return 0; // 如果没有点赞记录，则返回默认值
         }
     }
-    public Integer getNumOfDisikes(String articleId) {
+    public Integer getNumOfDislikes(String articleId) {
 //        HashOperations<String, Object, Object> ops = redisTemplate.opsForHash();
         String dislikesStr = (String) ops.get("operateToArticle:" + articleId, "dislike");
         if (dislikesStr != null) {
